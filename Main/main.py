@@ -155,12 +155,9 @@ try:
           
         w = kp * dmid + kd * d
         
-        x_speed = 100
+        x_speed = 60
         y_speed = 0
-        
-        #print(mid,w)
-
-        
+            
         if(abs(dmid) >= 18):
             x_speed /= 5
             #y_speed = -2*w
