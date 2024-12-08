@@ -6,12 +6,12 @@ import torchvision.transforms as transforms
 import torch.nn as nn
 
 # 定义与训练时相同的 CNN 模型
+
 class CNN(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self):
         super(CNN, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(1, 16, 3, padding=1),
-            nn.Conv2d(16, 16, 5),
+            nn.Conv2d(1, 16, 5),
             nn.ReLU(),
             nn.MaxPool2d(2, stride=2),
             nn.Dropout(0.3),
@@ -21,57 +21,23 @@ class CNN(nn.Module):
             nn.Dropout(0.3)
         )
         self.fc = nn.Sequential(
-            nn.Linear(32 * 4 * 4, 100),
+            nn.Linear(32*4*4, 100),
             nn.ReLU(),
-            nn.Linear(100, num_classes)
+            nn.Linear(100, 4)
         )
 
     def forward(self, x):
         x = self.conv(x)
-        x = x.view(-1, 32 * 4 * 4)
+        x = x.view(-1, 32*4*4)
         x = self.fc(x)
         return x
-
-# class CNN(nn.Module):
-#     def __init__(self):
-#         super(CNN, self).__init__()
-#         self.conv = nn.Sequential(
-#             nn.Conv2d(1, 16, 5),
-#             nn.ReLU(),
-#             nn.MaxPool2d(2, stride=2),
-#             nn.Dropout(0.3),
-#             nn.Conv2d(16, 32, 5),
-#             nn.ReLU(),
-#             nn.MaxPool2d(2, stride=2),
-#             nn.Dropout(0.3)
-#         )
-#         self.fc = nn.Sequential(
-#             nn.Linear(32*4*4, 100),
-#             nn.ReLU(),
-#             nn.Linear(100, 4)
-#         )
-
-#     def forward(self, x):
-#         x = self.conv(x)
-#         x = x.view(-1, 32*4*4)
-#         x = self.fc(x)
-#         return x
     
 # 加载模型
-num_classes = 4  # 类别数量
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = CNN(num_classes).to(device)
-model.load_state_dict(torch.load('traffic_sign_model.pth'))
+model = CNN().to(device)
+model.load_state_dict(torch.load('four.pth', map_location=torch.device('cpu')))
 model.eval()
 
-# 尝试加载模型权重
-try:
-    model.load_state_dict(torch.load('traffic_sign_model.pth', map_location=device))
-    model.eval()
-    print("模型加载成功！")
-except Exception as e:
-    print(f"模型加载失败：{e}")
-    
 # 定义数据预处理
 transform = transforms.Compose([
     transforms.Resize((28, 28)),

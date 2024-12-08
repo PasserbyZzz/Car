@@ -73,21 +73,13 @@ image_size=(120,160)
 videostream = VideoStream(resolution=(480,640),framerate=10).start()
 time.sleep(1)
 
-
 def is_white(point):
     if point[1] < 20  and point[2] > 230:
         return 1
     else:
         return 0
     
-def is_yellow(point):
-    if point[0] > 26 and point[0] < 34 and point[1] >43 and point[2] > 46:
-        return 1
-    else:
-        return 0
-    
 def getmid(hsv):
- 
     midline = []
     for y in range(80, 100):
         white_x = [81]
@@ -95,13 +87,11 @@ def getmid(hsv):
             if is_white(hsv[y][x]):
                 white_x.append(x)
                 hsv[y][x] = (0, 0, 0)
-        if(len(white_x) == 0):
+        if len(white_x) == 0:
             pass
         else:
             midline.append(sum(white_x)/len(white_x))
-            #midline.append((white_x[-1] + yellow_x[-1])/2)
         hsv[y][int(midline[-1])] = (0, 0, 0)
-    
     
     return sum(midline)/len(midline)                  
         
@@ -113,35 +103,24 @@ def getmid(hsv):
 # distCoeffs = data['distCoeffs']
 
 try:
-    
     last_dmid = 0
     dmid = 0
+
     while True:
-
         frame = videostream.read()
-
-#         frame = cv2.undistort(frame, cameraMatrix, distCoeffs, None, cameraMatrix)
 
         frame = cv2.resize(frame, None, fx = 0.25, fy = 0.25, interpolation= cv2.INTER_NEAREST) #采样 160*120
         
         HSV_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        #print(type(HSV_frame), HSV_frame[30][30])
-
-        
-        
         
         # 按q键可以退出
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
                                
-        
         mid = getmid(HSV_frame)
         
         kp = 2
         kd = 1
-        
-        
-        #cv2.imshow("frame",HSV_frame)
         
         last_mid = dmid
         dmid = 81 - mid
