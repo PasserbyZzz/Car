@@ -7,7 +7,7 @@ void setup() {
 
 void loop() {
   // 前
-  mecanum.driveAllMotor(100, 100, 100, 100);//屎
+  mecanum.driveAllMotor(100, 100, 100, 100);
   delay(1000);
   // 后
   mecanum.driveAllMotor(-100, -100, -100, -100);
