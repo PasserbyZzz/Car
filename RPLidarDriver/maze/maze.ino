@@ -86,9 +86,6 @@ float getrightback(float data[])
 
 }
 
-
-
-
 float difference = 0.0;
 float last_difference = 0.0;
 float k = 80.20; //80 90 40

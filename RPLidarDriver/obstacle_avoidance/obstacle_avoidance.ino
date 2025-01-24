@@ -1,5 +1,4 @@
 #include <RPLidar.h>
-#include <cmath>
 #include "MecanumDriver.h" 
 
 // 创建激光雷达对象
@@ -15,105 +14,9 @@ void setup() {
   mecanum.begin();  // 启动麦克纳姆轮驱动器
 }
 
-void setspeed(float x, float y, float w)//正： x向前，y向左，w逆时针。
-{
-  float fl,fr,bl,br;
-  fl = x + y - w;
-  fr = x - y + w;
-  bl = x - y - w;
-  br = x + y + w;
-
-  mecanum.driveAllMotor(fl, fr, bl, br);
-}
-
-float midline(float data[])
-{
-  int num = 0;
-  float res = 0;
-  for(int i = 22.5 + 45 * 1; i < 22.5 + 45 * 2; i++)
-  {
-    if(data[i] != 0)
-    {
-      res += (data[i] - data[360 - i]);
-      num ++;
-    }
-  }
-  return res/num;
-}
-
-float getFront(float data[])
-{
-  int num = 0;
-  float res = 0;
-  for(int i = 22.5 + 45 * 3; i < 22.5 + 45 * 4; i++)
-  {
-    if(data[i] != 0)
-    {
-      res += data[i];
-      num ++;
-    }
-  }
-  return res/num;
-}
-
-float getRight(float data[])
-{
-  int num = 0;
-  float res = 0;
-  for(int i = 22.5 + 45 * 5 + 22.5; i < 22.5 + 45 * 6; i++)
-  {
-    if(data[i] != 0)
-    {
-      res += data[i];
-      num ++;
-    }
-  }
-  return res/num;
-}
-
-float getLeft(float data[])
-{
-  int num = 0;
-  float res = 0;
-  for(int i = 22.5 + 45 * 1; i < 45 * 2; i++)
-  {
-    if(data[i] != 0)
-    {
-      res += data[i];
-      num ++;
-    }
-  }
-  return res/num;
-}
-
-float getAround(float data[])
-{
-  int num = 0;
-  float res = 0;
-  for(int i = 22.5 + 45 * 1; i < 22.5 + 45 * 6; i++)
-  {
-    if(data[i] != 0)
-    {
-      res += data[i];
-      num ++;
-    }
-  }
-  return res/num;
-}
-
-float mid = 0.0;
-float last_mid = 0.0;
-float k = 80; 
-float p = -10; 
-
-bool flag;
-
-float x_speed = 60;
-float w = 0.0;
-
 void loop() {
   if (IS_OK(lidar.waitPoint())) {                                // 等到一个新的扫描点
-    float distance = lidar.getCurrentPoint().distance;           // 距离值，单位mm
+    float distance = lidar.getCurrentPoint().distance / 1000.0;  // 距离值，单位m
     int angle = lidar.getCurrentPoint().angle;                   // 角度值（整数，四舍五入）
     bool startBit = lidar.getCurrentPoint().startBit;            // 每进入一次新的扫描时为true，其它时候为false
     if (angle >= 0 && angle < 360) {                             // 角度值在[0, 359]范围内
@@ -121,132 +24,38 @@ void loop() {
     }
 
     if (startBit) {             // 每进入一次新的扫描处理并控制一次
-      // 优先右转
-      // 不能右转则直行
-      // 不能直行则左转
-      // 不能左转则掉头
-
-      last_mid = mid;
-      mid = midline(distances);
-
-      float dmid = last_mid - mid;
-
-      w = (k * mid + p * dmid) / 1000.00;
-      // w = k * mid / 1000.00;
-
-      flag = true;
-      // 优先右转
-      if (getRight(distances) > 750)
-      {
-        // Serial.print(getRight(distances));
-        Serial.println("RIGHT");
-
-        // if (w < -100)
-        //   setspeed(0, 0, -200);
-        // else
-        //   setspeed(0, 0, w);
-
-        mecanum.driveAllMotor(100, -100, 100, -100);
-        // delay(40);
-
-        flag = false;
-      }
-
-      // 不能右转则直行(默认巡线)
-      else if (getFront(distances) > 500)
-      { 
-        // Serial.print(getFront(distances));
-        // Serial.println("STRAIGHT");
-      } 
-
-      // 不能直行则左转
-      else if (getLeft(distances) > 750)
-      {
-        // Serial.print(getLeft(distances));
-        Serial.println("LEFT");
-
-        // if (w > 100)
-        //   setspeed(0, 0, 200);
-        // else
-        //   setspeed(0, 0, w);
-
-        mecanum.driveAllMotor(-100, 100, -100, 100);
-        // delay(40);
-
-        flag = false;
-      }
-
-      // 不能左转则掉头
-      else if (getAround(distances) < 450)
-      {
-        // Serial.println("AROUND");
-
-        mecanum.driveAllMotor(100, -100, 100, -100);
-        delay(650);
-
-        flag = false;
-      }
-
-      // if (mid > 0)
-      //   x_speed -= (mid / 100.00);
-      // if (mid < 0)
-      //   x_speed += (mid / 100.00);
-
-      // if(mid <= 200 && mid >= 0)
-      //   {
-      //     x_speed += 0.5 * (200 - mid);
-      //   }
-
-      // if(mid >= -200 && mid <= 0)
-      // {
-      //   x_speed += 0.5 * (200 + mid);
-      // }
-
-      Serial.print("Left: ");
-      Serial.print(getLeft(distances));
-      Serial.print(" Right: ");
-      Serial.print(getRight(distances));
-      Serial.print(" Front: ");
-      Serial.print(getFront(distances));
-      Serial.print(" Around: ");
-      Serial.print(getAround(distances));
-      Serial.print(" Mid: ");
-      Serial.println(mid);
-      // Serial.print(" x_speed: ");
-      // Serial.print(x_speed);
-      // Serial.print(" w: ");
-      // Serial.println(w);
-
-      // if (flag)
-      // {
-      //   if (abs(w) > 5 && abs(w) < 100)
-      //     setspeed(x_speed, 0, w);
-      //   else
-      //     setspeed(x_speed, 0, 0);
-      // }
-
-      if (flag)
-      {
-        Serial.println("STRAIGHT");
-        if (mid > 60) 
-        {
-          Serial.print("LEFT");
-          mecanum.driveAllMotor(x_speed - 20, x_speed + 10, x_speed - 20, x_speed + 10);
-        }
-        if (mid < 0) 
-        {
-          Serial.print("RIGHT");
-          mecanum.driveAllMotor(x_speed + 10, x_speed - 20, x_speed + 10, x_speed - 20);
-        } 
-        else  
-        {
-          Serial.println("NO NEED");
-          mecanum.driveAllMotor(x_speed, x_speed, x_speed, x_speed);
+      float distance_min = 10;  // 用于存储最近障碍物距离
+      int angle_min = 0;        // 用于存储最近障碍物对应角度
+      // 遍历寻找[0, 359]范围内最近障碍物距离及其对应角度
+      for (int angle = 0; angle < 360; angle++) {
+        float distance = distances[angle];
+        if (distance >= 0.15) {           // 激光雷达的最小量程为0.15m，>=0.15的才是有效数据
+          if (distance < distance_min) {  // 如果障碍物距离<最近距离
+            distance_min = distance;      // 更新障碍物最近距离
+            angle_min = angle;            // 更新最近障碍物对应角度
+          }
         }
       }
-      
-
-
+      if (distance_min > 0.5) {             // 如果最近障碍物距离大于0.5m
+        mecanum.driveAllMotor(0, 0, 0, 0);  // 小车静止不动
+      } else {
+        if (angle_min > 22.5 + 45 * 7 || angle_min < 22.5 +45 * 0)  // 最近障碍物位于后方
+          mecanum.driveAllMotor(100, 100, 100, 100);                // 向前
+        if (angle_min > 22.5 + 45 * 3 || angle_min < 22.5 +45 * 4)  // 最近障碍物位于前方
+          mecanum.driveAllMotor(-100, -100, -100, -100);            // 向后
+        if (angle_min > 22.5 + 45 * 0 || angle_min < 22.5 +45 * 1)  // 最近障碍物位于左后方
+          mecanum.driveAllMotor(100, 0, 0, 100);                    // 向右前
+        if (angle_min > 22.5 + 45 * 6 || angle_min < 22.5 +45 * 7)  // 最近障碍物位于右后方
+          mecanum.driveAllMotor(0, 100, 100, 0);                    // 向左前
+        if (angle_min > 22.5 + 45 * 1 || angle_min < 22.5 +45 * 2)  // 最近障碍物位于左方
+          mecanum.driveAllMotor(100, -100, -100, 100);              // 向右
+        if (angle_min > 22.5 + 45 * 5 || angle_min < 22.5 +45 * 6)  // 最近障碍物位于右方
+          mecanum.driveAllMotor(-100, 100, 100, -100);              // 向左
+        if (angle_min > 22.5 + 45 * 2 || angle_min < 22.5 +45 * 3)  // 最近障碍物位于左前方
+          mecanum.driveAllMotor(0, -100, -100, 00);                 // 向右后
+        if (angle_min > 22.5 + 45 * 4 || angle_min < 22.5 +45 * 5)  // 最近障碍物位于右前方
+          mecanum.driveAllMotor(-100, 0, 0, -100);                  // 向左后
+      }
     }
   } else {
     // 重新连接激光雷达
